@@ -20,7 +20,7 @@
       { width: 48, height: 48, name: 'favicon48.png', type: 'png' },
       { width: 32, height: 32, name: 'favicon32.png', type: 'png' },
       { width: 16, height: 16, name: 'favicon16.png', type: 'png' },
-      { width: 48, height: 48, name: 'favicon.ico', type: 'ico' }, 
+      { width: 48, height: 48, name: 'favicon.ico', type: 'ico' }, // Nome ajustado para favicon.ico
     ];
 
     function convertCanvasToICO(canvas) {
@@ -51,7 +51,7 @@
           const url = URL.createObjectURL(svgBlob);
           img.src = url;
         } else {
-          // Para outros tipos de imagem
+          // Para outros tipos de imagem (PNG, JPG, etc.)
           img.src = event.target.result;
         }
 
@@ -90,8 +90,12 @@
         };
       };
 
-      reader.readAsText(file);  // Lê como texto se for SVG
-      reader.readAsDataURL(file);  // Para outros tipos de imagem
+      // Conditionally use the appropriate read method for SVG and other formats
+      if (file.type === 'image/svg+xml') {
+        reader.readAsText(file);  // Lê como texto se for SVG
+      } else {
+        reader.readAsDataURL(file);  // Para PNG, JPEG, etc.
+      }
     });
   </script>
 </body>
