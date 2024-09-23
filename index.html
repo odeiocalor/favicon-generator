@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gerador de Favicons</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.6.0/jszip.min.js"></script>
+</head>
+<body>
+  <h1>Gerador de Favicons</h1>
+  <input type="file" id="imageInput" accept="image/*,.svg">
+  <button id="generateBtn">Gerar Tamanhos</button>
+  <div id="output"></div>
+  
+  <script>
+    const sizes = [
+      { width: 180, height: 180, name: 'favicon180.png', type: 'png' },
+      { width: 144, height: 144, name: 'favicon144.png', type: 'png' },
+      { width: 96, height: 96, name: 'favicon96.png', type: 'png' },
+      { width: 48, height: 48, name: 'favicon48.png', type: 'png' },
+      { width: 32, height: 32, name: 'favicon32.png', type: 'png' },
+      { width: 16, height: 16, name: 'favicon16.png', type: 'png' },
+      { width: 48, height: 48, name: 'favicon.ico', type: 'ico' }, 
+    ];
+
+    function convertCanvasToICO(canvas) {
+      return canvas.toDataURL('image/x-icon');
+    }
+
+    document.getElementById('generateBtn').addEventListener('click', () => {
+      const file = document.getElementById('imageInput').files[0];
+      if (!file) {
+        alert('Por favor, envie uma imagem.');
+        return;
+      }
+      
+      const folderName = prompt('Qual o nome da pasta?');
+      if (!folderName) {
+        alert('Nome da pasta não fornecido.');
+        return;
+      }
+
+      const reader = new FileReader();
+      reader.onload = function(event) {
+        const img = new Image();
+
+        // Se o arquivo for SVG, precisamos garantir que o navegador renderize o SVG corretamente no canvas
+        if (file.type === 'image/svg+xml') {
+          const svgText = event.target.result;
+          const svgBlob = new Blob([svgText], { type: 'image/svg+xml' });
+          const url = URL.createObjectURL(svgBlob);
+          img.src = url;
+        } else {
+          // Para outros tipos de imagem
+          img.src = event.target.result;
+        }
+
+        img.onload = function() {
+          const zip = new JSZip();
+
+          sizes.forEach(size => {
+            const canvas = document.createElement('canvas');
+            canvas.width = size.width;
+            canvas.height = size.height;
+            const ctx = canvas.getContext('2d');
+            ctx.drawImage(img, 0, 0, size.width, size.height);
+
+            if (size.type === 'png') {
+              canvas.toBlob(blob => {
+                zip.file(size.name, blob);
+              }, 'image/png');
+            } else if (size.type === 'ico') {
+              const icoDataUrl = convertCanvasToICO(canvas); 
+              fetch(icoDataUrl)
+                .then(res => res.blob())
+                .then(blob => {
+                  zip.file('favicon.ico', blob); 
+                });
+            }
+          });
+
+          setTimeout(() => {
+            zip.generateAsync({ type: 'blob' }).then(function(content) {
+              const link = document.createElement('a');
+              link.href = URL.createObjectURL(content);
+              link.download = `${folderName}.zip`; 
+              link.click();
+            });
+          }, 1000); 
+        };
+      };
+
+      reader.readAsText(file);  // Lê como texto se for SVG
+      reader.readAsDataURL(file);  // Para outros tipos de imagem
+    });
+  </script>
+</body>
+</html>
